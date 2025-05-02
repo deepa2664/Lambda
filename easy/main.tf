@@ -11,9 +11,10 @@ resource "aws_s3_bucket" "destination" {
   bucket = "my-destination-bucket-unique-name456"
 }
 
-# IAM Role
+# IAM Role for Lambda
 resource "aws_iam_role" "lambda_exec" {
   name = "lambda_s3_copy_role"
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [{
@@ -30,6 +31,7 @@ resource "aws_iam_role" "lambda_exec" {
 resource "aws_iam_role_policy" "lambda_policy" {
   name = "lambda_s3_policy"
   role = aws_iam_role.lambda_exec.id
+
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -61,9 +63,15 @@ resource "aws_lambda_function" "s3_copy" {
   runtime          = "python3.9"
   role             = aws_iam_role.lambda_exec.arn
   source_code_hash = filebase64sha256("lambda_function_payload.zip")
+
+  environment {
+    variables = {
+      DEST_BUCKET = aws_s3_bucket.destination.bucket
+    }
+  }
 }
 
-# Lambda Permission
+# Lambda Permission to allow S3 to invoke it
 resource "aws_lambda_permission" "allow_s3" {
   statement_id  = "AllowExecutionFromS3"
   action        = "lambda:InvokeFunction"
@@ -72,7 +80,7 @@ resource "aws_lambda_permission" "allow_s3" {
   source_arn    = aws_s3_bucket.source.arn
 }
 
-# S3 Notification Trigger
+# S3 Event Notification Trigger for Lambda
 resource "aws_s3_bucket_notification" "bucket_notification" {
   bucket = aws_s3_bucket.source.id
 
