@@ -18,13 +18,15 @@ resource "aws_iam_role" "lambda_exec" {
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
-    Statement = [{
-      Action = "sts:AssumeRole",
-      Effect = "Allow",
-      Principal = {
-        Service = "lambda.amazonaws.com"
+    Statement = [
+      {
+        Action = "sts:AssumeRole",
+        Effect = "Allow",
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
       }
-    }]
+    ]
   })
 }
 
@@ -40,11 +42,13 @@ resource "aws_iam_role_policy" "lambda_policy" {
         Effect = "Allow",
         Action = [
           "s3:GetObject",
+          "s3:ListBucket",  # Added permission for ListBucket
           "s3:PutObject"
         ],
         Resource = [
-          "${aws_s3_bucket.source.arn}/*",  # Allow read access to objects in the source bucket
-          "${aws_s3_bucket.destination.arn}/*"  # Allow write access to the destination bucket
+          "${aws_s3_bucket.source.arn}",  # ListBucket permission on the source bucket
+          "${aws_s3_bucket.source.arn}/*",  # GetObject permission on the source bucket objects
+          "${aws_s3_bucket.destination.arn}/*"  # PutObject permission on the destination bucket
         ]
       },
       {
@@ -59,7 +63,7 @@ resource "aws_iam_role_policy" "lambda_policy" {
 # 5. Lambda function that is triggered by S3 event (file upload) and copies the file to destination
 resource "aws_lambda_function" "s3_copy" {
   function_name    = "S3CopyFunction"
-  filename         = "lambda_function_payload.zip"  # You need to create and zip the Lambda function code
+  filename         = "lambda_function_payload.zip"  # Path to the zipped Lambda code
   handler          = "lambda_function.lambda_handler"
   runtime          = "python3.9"
   role             = aws_iam_role.lambda_exec.arn
@@ -87,5 +91,25 @@ resource "aws_lambda_permission" "allow_s3" {
   source_arn    = aws_s3_bucket.source.arn
 }
 
-# 8. Lambda Function Code (Python code)
-# Save this Python code as lambda_function.py, zip it, and upload it as lambda_function_payload.zip
+# Lambda function code (Python code)
+# Save the below Python code as lambda_function.py, zip it, and upload it as lambda_function_payload.zip
+#
+# import json
+# import boto3
+#
+# def lambda_handler(event, context):
+#     s3 = boto3.client('s3')
+#     
+#     # Extract bucket and file details from the event
+#     source_bucket = event['Records'][0]['s3']['bucket']['name']
+#     key = event['Records'][0]['s3']['object']['key']
+#     destination_bucket = 'my-destination-bucket-unique-name1234'  # Replace with your destination bucket name
+#     
+#     # Copy the object to the destination bucket
+#     copy_source = {'Bucket': source_bucket, 'Key': key}
+#     s3.copy_object(CopySource=copy_source, Bucket=destination_bucket, Key=key)
+#
+#     return {
+#         'statusCode': 200,
+#         'body': json.dumps('File successfully copied!')
+#     }
