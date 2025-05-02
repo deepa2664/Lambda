@@ -4,11 +4,11 @@ provider "aws" {
 
 # 1. Create source and destination S3 Buckets
 resource "aws_s3_bucket" "source" {
-  bucket = "my-source-bucket-unique-name"  # Ensure this name is globally unique
+  bucket = "my-source-bucket-unique-name789"  # Ensure this name is globally unique
 }
 
 resource "aws_s3_bucket" "destination" {
-  bucket = "my-destination-bucket-unique-name"  # Ensure this name is globally unique
+  bucket = "my-destination-bucket-unique-name456"  # Ensure this name is globally unique
 }
 
 # 2. IAM role for Lambda to allow access to S3 buckets
