@@ -4,11 +4,11 @@ provider "aws" {
 
 # 1. Create source and destination buckets
 resource "aws_s3_bucket" "source" {
-  bucket = "my-source-bucket-unique-name"
+  bucket = "my-source-bucket-unique-name2664"
 }
 
 resource "aws_s3_bucket" "destination" {
-  bucket = "my-destination-bucket-unique-name"
+  bucket = "my-destination-bucket-unique-name1234"
 }
 
 # 2. IAM role for Lambda
